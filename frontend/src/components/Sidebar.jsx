@@ -58,10 +58,10 @@ const Sidebar = () => {
 
                 {/* Navigation Links */}
                 <nav className="nav-menu">
-                    <NavItem to="/dashboard" text="Home" icon={<FontAwesomeIcon icon={faHome} />} onClick={() => isMobile && setSidebarOpen(false)} />
-                    <NavItem to="/sku-management" text="SKU Management" icon={<FontAwesomeIcon icon={faBoxes} />} onClick={() => isMobile && setSidebarOpen(false)} />
-                    <NavItem to="/profile" text="Profile" icon={<FontAwesomeIcon icon={faUser} />} onClick={() => isMobile && setSidebarOpen(false)} />
-                    <NavItem to="/production-records" text="Production Record" icon={<FontAwesomeIcon icon={faClipboardList} />} onClick={() => isMobile && setSidebarOpen(false)} />
+                    <button onClick={() => navigate('/dashboard')}> <NavItem to="/dashboard" text="Home" icon={<FontAwesomeIcon icon={faHome} />} onClick={() => isMobile && setSidebarOpen(false)} /></button>
+                    <button onClick={() => navigate('/sku-management')} ><NavItem to="/sku-management" text="SKU Management" icon={<FontAwesomeIcon icon={faBoxes} />} onClick={() => isMobile && setSidebarOpen(false)} /></button>
+                    <button onClick={() => navigate('/profile')}><NavItem to="/profile" text="Profile" icon={<FontAwesomeIcon icon={faUser} />} onClick={() => isMobile && setSidebarOpen(false)} /></button>
+                    <button onClick={() => navigate('/production-records')}><NavItem to="/production-records" text="Production Record" icon={<FontAwesomeIcon icon={faClipboardList} />} onClick={() => isMobile && setSidebarOpen(false)} /></button>
                 </nav>
 
                 {/* Footer with Logout */}
@@ -75,7 +75,7 @@ const Sidebar = () => {
                     </div>
                 </div>
             </div>
-            
+
             {/* Overlay for mobile when sidebar is open */}
             {isMobile && sidebarOpen && (
                 <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />

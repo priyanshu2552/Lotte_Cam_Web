@@ -5,7 +5,6 @@ import moment from 'moment';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
 import '../styles/Record.css'; // Assuming you have a CSS file for styling
-import toast from 'react-hot-toast';
 const { Content } = Layout;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -95,15 +94,8 @@ const ProductionRecords = () => {
                 startDate: filters.dateRange[0]?.add(1, 'day').format('YYYY-MM-DD'),
                 endDate: filters.dateRange[1]?.add(1, 'day').format('YYYY-MM-DD')
             };
-            let response;
-            if (params.unitName) {
-                response = await api.get('/production/records', { params });
-            }
-            else {
-                toast.error("Please select a unit to fetch records");
-                setLoading(false);
-                return;
-            }
+               
+            const response = await api.get('/production/records', { params });
             setData(response.data);
         } catch (error) {
             console.error('Error fetching production records:', error);

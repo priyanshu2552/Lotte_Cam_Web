@@ -106,7 +106,10 @@ class ProductionController {
         GROUP BY b.id, p.id, DATE(be.created_at)
         ORDER BY production_date DESC, b.name, p.name
       `;
-
+      if (beltId && unitId) {
+        res.status(500).json({ error: 'Belt ID and Unit ID is not filled.' });
+        return;
+      }
       const [results] = await pool.query(query, params);
 
       // Compose data: date > belts > products
@@ -316,7 +319,7 @@ class ProductionController {
     try {
       const [units] = await pool.query('SELECT id, name FROM Unit ORDER BY name');
       res.json(units);
-     
+
     } catch (error) {
       console.error('Error fetching units:', error);
       res.status(500).json({ error: 'Failed to fetch units' });
