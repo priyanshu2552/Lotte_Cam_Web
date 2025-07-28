@@ -1,0 +1,175 @@
+/* Sidebar Container */
+.sidebar {
+  width: 280px;
+  height: 100vh;
+  background: #000000;
+  color: #fffafa;
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 30px 0;
+  box-shadow: 2px 0 15px rgba(112, 111, 111, 0.1);
+  border-right: 1px solid #e0e0e0;
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+  z-index: 1000;
+}
+
+
+/* Mobile styles */
+.sidebar.mobile {
+  transform: translateX(-100%);
+}
+
+.sidebar.mobile.open {
+  transform: translateX(0);
+}
+
+/* Mobile menu button */
+.mobile-menu-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: #000000;
+  color: white;
+  border: none;
+  font-size: 1.5rem;
+  padding: 10px 15px;
+  border-radius: 4px;
+  z-index: 999;
+  cursor: pointer;
+  display: none;
+}
+
+.mobile-menu-btn:hover {
+  background: #333;
+}
+
+/* Overlay for mobile */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  backdrop-filter: blur(2px);
+}
+
+/* Rest of your existing CSS remains the same */
+.user-profile {
+  padding: 0 25px 25px;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.user-profile h2 {
+  margin: 0 0 5px 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.user-role {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #4d7779;
+  font-weight: 500;
+}
+.nav-menu {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 35px;
+  padding: 0 15px;
+}
+
+.nav-item, 
+.nav-item:link, 
+.nav-item:visited, 
+.nav-item:active {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  color: #ffffff;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  font-size: 1.1rem;
+  border-radius: 8px;
+  position: relative;
+}
+
+.nav-item:hover {
+  background: #f5f7fa;
+  color: #000000;
+}
+
+.nav-item.active {
+  background: #4d7779;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.nav-icon {
+  margin-right: 15px;
+  font-size: 1.2rem;
+  color: inherit;
+}
+
+.sidebar-footer {
+  padding: 20px 25px 0;
+  margin-top: auto;
+  border-top: 1px solid #eee;
+}
+
+.logout-btn {
+  width: 100%;
+  padding: 12px;
+  background: #0a0a0a;
+  color: #fafafa;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  margin-bottom: 20px;
+}
+
+.logout-btn:hover {
+  background: #ffebee;
+  color: #4d7779;
+}
+
+.app-info {
+  font-size: 0.8rem;
+  color: #ffffff;
+  line-height: 1.5;
+}
+
+.copyright {
+  color: #ffffff;
+}
+
+/* Media Query for Mobile */
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: block;
+  }
+  
+  .sidebar {
+    box-shadow: 5px 0 15px rgba(0, 0, 0, 0.3);
+    transform: translateX(-100%);
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .main-content {
+    margin-left: 0;
+  }
+}

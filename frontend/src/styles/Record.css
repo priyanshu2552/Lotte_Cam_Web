@@ -1,0 +1,33 @@
+/* ProductionRecords.css */
+.site-layout {
+    transition: margin-left 0.3s ease;
+}
+
+/* For mobile devices */
+@media (max-width: 768px) {
+    .site-layout {
+        margin-left: 0 !important;
+    }
+    
+    .sidebar.open + .site-layout {
+        margin-left: 280px !important;
+        width: calc(100% - 280px);
+        position: fixed;
+        left: 280px;
+    }
+}
+
+.production-records {
+    background: #fff;
+    min-height: calc(100vh - 40px);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure the content doesn't get hidden behind the sidebar on mobile */
+@media (max-width: 768px) {
+    .production-records {
+        padding-top: 80px; /* Space for the mobile menu button */
+    }
+}
