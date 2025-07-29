@@ -4,7 +4,7 @@ import { DownloadOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
-import '../styles/Record.css'; // Assuming you have a CSS file for styling
+import '../styles/Record.css'; 
 const { Content } = Layout;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -19,7 +19,7 @@ const ProductionRecords = () => {
     const [total_p, setTotal_p] = useState(0);
 
     const [filters, setFilters] = useState({
-        unitName: null,  // Changed from unitId to unitName
+        unitName: null,  
         beltId: null,
         productId: null,
         dateRange: [moment().subtract(10, 'days'), moment()]
@@ -63,7 +63,7 @@ const ProductionRecords = () => {
     const fetchBeltsByUnit = async (unitName) => {
         try {
             const response = await api.get(`/getbeltsbyunit/${unitName}`);
-            // Ensure we're working with an array and the data has the expected structure
+     
             const beltsData = Array.isArray(response.data) ? response.data : [];
             setBelts(beltsData);
             console.log('Fetched belts:', beltsData);
@@ -88,7 +88,7 @@ const ProductionRecords = () => {
         setLoading(true);
         try {
             const params = {
-                unitName: filters.unitName,  // Changed from unitId to unitName
+                unitName: filters.unitName,  
                 beltId: filters.beltId,
                 productId: filters.productId,
                 startDate: filters.dateRange[0]?.add(1, 'day').format('YYYY-MM-DD'),
@@ -140,8 +140,7 @@ const ProductionRecords = () => {
     const handleFilterChange = (name, value) => {
         const newFilters = { ...filters, [name]: value };
 
-        // Reset dependent filters
-        if (name === 'unitName') {  // Changed from unitId to unitName
+        if (name === 'unitName') { 
             newFilters.beltId = null;
             newFilters.productId = null;
         } else if (name === 'beltId') {

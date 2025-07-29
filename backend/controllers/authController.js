@@ -43,7 +43,7 @@ export default {
             );
 
             if (!users.length) {
-                // Security: Don't reveal if email exists
+                
                 return res.json({
                     message: 'If the email exists, a reset link has been sent'
                 });
@@ -51,13 +51,13 @@ export default {
 
             const user = users[0];
 
-            // First, clear any existing tokens
+          
             await pool.query(
                 'UPDATE users SET reset_password_token = NULL, reset_token_expires = NULL WHERE id = ?',
                 [user.id]
             );
 
-            // Generate new token
+            
             const resetToken = jwt.sign(
                 { id: user.id },
                 process.env.JWT_RESET_SECRET,
@@ -79,7 +79,7 @@ export default {
                 });
             } catch (emailError) {
                 console.error('Email failed:', emailError);
-                // Rollback if email fails
+                
                 await pool.query(
                     'UPDATE users SET reset_password_token = NULL, reset_token_expires = NULL WHERE id = ?',
                     [user.id]
@@ -109,7 +109,7 @@ export default {
                 return res.status(400).json({ error: 'Password must be at least 8 characters' });
             }
 
-            // Verify the token
+        
             let decoded;
             try {
                 decoded = jwt.verify(token, process.env.JWT_RESET_SECRET);
@@ -117,7 +117,6 @@ export default {
                 return res.status(400).json({ error: 'Invalid or expired token' });
             }
 
-            // Check if token exists and is not expired
             const [users] = await pool.query(
                 'SELECT id FROM users WHERE reset_password_token=? AND reset_token_expires > NOW() AND id=?',
                 [token, decoded.id]
