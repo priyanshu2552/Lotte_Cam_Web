@@ -8,6 +8,7 @@ import '../styles/Record.css';
 const { Content } = Layout;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
+import { useWebSocket } from '../context/WebSocketContext';
 
 const ProductionRecords = () => {
     const [loading, setLoading] = useState(false);
@@ -24,6 +25,7 @@ const ProductionRecords = () => {
         productId: null,
         dateRange: [moment().subtract(10, 'days'), moment()]
     });
+    const socket=useWebSocket();
     const api = axios.create({
         baseURL: 'http://localhost:3000/api/users',
         timeout: 10000,
@@ -47,6 +49,19 @@ const ProductionRecords = () => {
             setFilters(prev => ({ ...prev, beltId: null }));
         }
     }, [filters.unitName]);
+
+     useEffect(() => {
+        if (socket) {
+            const handleDataChange = () => {
+                if (filters.unitName || filters.dateRange) {
+                    console.log('Refreshing production records...');
+                    fetchData();
+                }
+            };
+            socket.on('dataChanged', handleDataChange);
+            return () => socket.off('dataChanged', handleDataChange);
+        }
+    }, [socket, filters]);
 
     const fetchUnits = async () => {
         try {

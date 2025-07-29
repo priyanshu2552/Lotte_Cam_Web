@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/Dashboard.css';
 import Sidebar from '../components/Sidebar';
+import { useWebSocket } from '../context/WebSocketContext';
 
 const Dashboard = () => {
     const [units, setUnits] = useState([]);
@@ -16,6 +17,7 @@ const Dashboard = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const beltsPerPage = 4; // Show 4 belts per page (2 rows of 2)
     const navigate = useNavigate();
+    const socket = useWebSocket();
 
     useEffect(() => {
         const fetchUnits = async () => {
@@ -45,31 +47,41 @@ const Dashboard = () => {
         fetchUnits();
     }, []);
 
-    useEffect(() => {
-        if (selectedUnit !== null) {
-            fetchDashboardData();
-        }
-    }, [selectedUnit]);
+    // In your Dashboard component
+useEffect(() => {
+    if (!selectedUnit) return;
 
-    const fetchDashboardData = async () => {
-        setLoading(prev => ({ ...prev, belts: true }));
-        setError('');
+    const fetchData = async () => {
+        console.log("🔄 Fetching dashboard data...");
         try {
             const response = await axios.get('http://localhost:3000/api/users/dashboard-data', {
                 params: { unitName: selectedUnit },
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`
-                }
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
+            console.log("📊 Data received:", response.data);
             setBelts(response.data.belts || []);
         } catch (err) {
             console.error('Error fetching dashboard data:', err);
             setError('Failed to load belt data');
-        } finally {
-            setLoading(prev => ({ ...prev, belts: false }));
         }
     };
 
+    fetchData();
+
+    if (socket) {
+        console.log("👂 Setting up socket listener for dataChanged");
+        const handleDataChange = (data) => {
+            console.log("🔔 dataChanged event received:", data);
+            fetchData();
+        };
+        
+        socket.on('dataChanged', handleDataChange);
+        return () => {
+            console.log("🧹 Cleaning up socket listener");
+            socket.off('dataChanged', handleDataChange);
+        };
+    }
+}, [selectedUnit, socket]);
     const indexOfLastBelt = currentPage * beltsPerPage;
     const indexOfFirstBelt = indexOfLastBelt - beltsPerPage;
     const currentBelts = belts.slice(indexOfFirstBelt, indexOfLastBelt);
@@ -146,10 +158,10 @@ const Dashboard = () => {
                                             {/* Single Camera Feed */}
                                             <div className="camera-feed">
                                                 <div className="video-container">
-                                                    <iframe 
-                                                        src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1&loop=1" 
-                                                        frameBorder="0" 
-                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                                    <iframe
+                                                        src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1&loop=1"
+                                                        frameBorder="0"
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                                         allowFullScreen
                                                         title={`Camera Feed for ${belt.name}`}
                                                     ></iframe>

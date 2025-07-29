@@ -6,8 +6,10 @@ import Dashboard from "./pages/Dashboard";
 import SKUManagement from "./pages/SKU";
 import ProfilePage from "./pages/Profile";
 import ProductionRecords from "./pages/Records";
+import { WebSocketProvider } from "./context/WebSocketContext";
 function App() {
   return (
+    <WebSocketProvider>
     <Router>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
@@ -23,6 +25,7 @@ function App() {
         {/* Add more routes as needed */}
       </Routes>
     </Router>
+    </WebSocketProvider>
   );
 }
 
