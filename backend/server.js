@@ -10,12 +10,46 @@ import Unit from './models/Unit.js';
 import BeltEntries from './models/BeltEntries.js';
 import ProductionRecord from './models/ProductionRecord.js';
 import ProductionWebSocket from './Services/websocket.js';
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+async function createAdminUserIfNotExists() {
+  try {
+    const [users] = await pool.query(
+      'SELECT * FROM users WHERE email = ?',
+      [process.env.ADMIN_EMAIL]
+    );
+
+    if (users.length === 0) {
+      const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
+      
+      await pool.query(
+        `INSERT INTO users 
+        (name, email, password, contact, role, is_email_verified) 
+        VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          process.env.ADMIN_NAME,
+          process.env.ADMIN_EMAIL,
+          hashedPassword,
+          process.env.ADMIN_CONTACT,
+          'admin',
+          true
+        ]
+      );
+      console.log('✅ Admin user created successfully');
+    } else {
+      console.log('ℹ️ Admin user already exists');
+    }
+  } catch (error) {
+    console.error('❌ Failed to create admin user:', error);
+    throw error;
+  }
+}
 
 async function initializeApplication() {
   try {
@@ -27,15 +61,18 @@ async function initializeApplication() {
     // 2. Initialize all database schemas
     await initializeAllSchemas();
 
-    // 3. Start the HTTP server
+    // 3. Create admin user if not exists
+    await createAdminUserIfNotExists();
+
+    
     const server = app.listen(process.env.PORT || 3000, () => {
       console.log(`🚀 Server running on port ${process.env.PORT || 3000}`);
     });
 
-    // 4. Initialize WebSocket server with the HTTP server instance
+    // 5. Initialize WebSocket server with the HTTP server instance
     new ProductionWebSocket(server);
 
-    // 5. Set up routes (after server is ready)
+    // 6. Set up routes (after server is ready)
     app.use('/api/users', userRoutes);
 
     // Error handling middleware
@@ -53,12 +90,12 @@ async function initializeApplication() {
 async function initializeAllSchemas() {
   try {
     // Initialize in proper dependency order
-    await Unit.initSchema();         // No dependencies
-    await Product.initSchema();      // No dependencies
-    await Belt.initSchema();         // Depends on Unit
-    await BeltEntries.initSchema();  // Depends on Belt and Product
-    await ProductionRecord.initSchema(); // Depends on BeltEntries
-    await User.initSchema();         // Independent
+    await Unit.initSchema();
+    await Product.initSchema();
+    await Belt.initSchema();
+    await BeltEntries.initSchema();
+    await ProductionRecord.initSchema();
+    await User.initSchema();
 
     console.log('✅ All database schemas initialized');
   } catch (err) {
@@ -66,70 +103,6 @@ async function initializeAllSchemas() {
     throw err;
   }
 }
-// Add to your routes
-app.get('/test-db-change', async (req, res) => {
-  try {
-    console.log("💉 Attempting test DB change...");
-    
-    // 1. First verify connection
-    await pool.query("SELECT 1");
-    
-    // 2. Create test data with proper JSON formatting
-    const testData = {
-      BoxCount: 10,
-      Barcode_content: JSON.stringify({status: "valid", barcode: "222111000"}),
-      created_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
-      Updated: new Date().toISOString().slice(0, 19).replace('T', ' '),
-      belt_id: 1,
-      production_id: 4
-    };
-
-    // 3. Execute with parameterized query
-    const [result] = await pool.query(
-      `INSERT INTO BeltEntries 
-       (BoxCount, Barcode_content, created_at, Updated, belt_id, production_id) 
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [
-        testData.BoxCount,
-        testData.Barcode_content,
-        testData.created_at,
-        testData.Updated,
-        testData.belt_id,
-        testData.production_id
-      ]
-    );
-
-    console.log("✅ Test DB change successful. Rows affected:", result.affectedRows);
-    console.log("Insert ID:", result.insertId);
-
-    // 4. Immediately make an update to trigger another event
-    await pool.query(
-      `UPDATE BeltEntries SET BoxCount = ? WHERE id = ?`,
-      [15, result.insertId]
-    );
-
-    res.json({ 
-      success: true, 
-      insertId: result.insertId,
-      message: "Check server logs for binlog events"
-    });
-
-  } catch (err) {
-    console.error("💥 Test DB change failed:", {
-      message: err.message,
-      code: err.code,
-      sqlMessage: err.sqlMessage,
-      sql: err.sql
-    });
-    res.status(500).json({ 
-      error: err.message,
-      details: {
-        code: err.code,
-        sqlMessage: err.sqlMessage
-      }
-    });
-  }
-});
 
 // Start the application
 initializeApplication();

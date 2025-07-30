@@ -21,11 +21,11 @@ class BeltController {
     }
 
     static async createBelts(req, res) {
-        const { name, CameraCount, CameraBarcode, Unit } = req.body;
+        const { name, CameraCount, CameraBarcode, Unit,ROI_Count,ROI_Barcode } = req.body;
         try {
             const [result] = await pool.query(
-                'insert into Belt (name,CameraCount,CameraBarcode,Unit) values (?,?,?,?)',
-                [name, CameraCount, CameraBarcode, Unit]
+                'insert into Belt (name,CameraCount,CameraBarcode,Unit,ROI_Count,ROI_Barcode) values (?,?,?,?,?,?)',
+                [name, CameraCount, CameraBarcode, Unit, JSON.stringify(ROI_Count), JSON.stringify(ROI_Barcode)]
             );
             res.status(201).json({ id: result.insertId, ...req.body });
         } catch (error) {
@@ -35,11 +35,11 @@ class BeltController {
     }
     static async updateBelt(req, res) {
         const { id } = req.params;
-        const { name, CameraCount, CameraBarcode, Unit } = req.body;
+        const { name, CameraCount, CameraBarcode, Unit,ROI_Count,ROI_Barcode } = req.body;
         try {
             await pool.query(
-                'UPDATE Belt SET name = ?, CameraCount = ?, CameraBarcode = ?, Unit = ? WHERE id = ?',
-                [name, CameraCount, CameraBarcode, Unit, id]
+                'UPDATE Belt SET name = ?, CameraCount = ?, CameraBarcode = ?, Unit = ?, ROI_Count=?, ROI_Barcode=? WHERE id = ?',
+                [name, CameraCount, CameraBarcode, Unit, JSON.stringify(ROI_Count), JSON.stringify(ROI_Barcode), id]
             );
             res.json({ id, ...req.body });
         } catch (error) {

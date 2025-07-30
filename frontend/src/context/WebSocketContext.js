@@ -1,57 +1,59 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 
-
 const WebSocketContext = createContext(null);
 
 export const WebSocketProvider = ({ children }) => {
     const [socket, setSocket] = useState(null);
 
-    // In your WebSocketProvider component
-useEffect(() => {
-    const socketInstance = io(process.env.REACT_APP_WEBSOCKET_URL || 'http://localhost:3000', {
-        reconnection: true,
-        reconnectionAttempts: Infinity,
-        reconnectionDelay: 1000,
-        transports: ['websocket'], // Force WebSocket transport only
-        withCredentials: true,
-        extraHeaders: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-    });
+    useEffect(() => {
+        const socketInstance = io(process.env.REACT_APP_WEBSOCKET_URL || 'http://localhost:3000', {
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            timeout: 20000,
+            transports: ['websocket'],
+            withCredentials: true,
+            extraHeaders: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+        });
 
-    // Debug listeners
-    socketInstance.on('connect', () => {
-        console.log("✅ [WebSocket] Connected with ID:", socketInstance.id);
-    });
+        socketInstance.on('connect', () => {
+            console.log("✅ [WebSocket] Connected with ID:", socketInstance.id);
+        });
 
-    socketInstance.on('disconnect', (reason) => {
-        console.log("❌ [WebSocket] Disconnected:", reason);
-    });
+        socketInstance.on('disconnect', (reason) => {
+            if (reason === 'io server disconnect') {
+                socketInstance.connect();
+            }
+            console.log("❌ [WebSocket] Disconnected:", reason);
+        });
 
-    socketInstance.on('connect_error', (error) => {
-        console.log("❌ [WebSocket] Connection Error:", error);
-    });
+        socketInstance.on('connect_error', (error) => {
+            console.log("❌ [WebSocket] Connection Error:", error);
+            setTimeout(() => {
+                socketInstance.connect();
+            }, 1000);
+        });
 
-    socketInstance.on('error', (error) => {
-        console.log("❌ [WebSocket] Error:", error);
-    });
+        setSocket(socketInstance);
 
-    socketInstance.onAny((event, ...args) => {
-        console.log(`📢 [WebSocket] Received ${event}:`, args);
-    });
+        return () => {
+            if (socketInstance.connected) {
+                console.log("🧹 [WebSocket] Gracefully disconnecting");
+                socketInstance.removeAllListeners();
+                socketInstance.disconnect();
+            }
+        };
+    }, []);
 
-    setSocket(socketInstance);
-    
-    return () => {
-        console.log("🧹 [WebSocket] Cleaning up connection");
-        socketInstance.disconnect();
-    };
-}, []);
-
-    return (<WebSocketContext.Provider value={socket}>
-        {children}
-    </WebSocketContext.Provider>
+    return (
+        <WebSocketContext.Provider value={socket}>
+            {children}
+        </WebSocketContext.Provider>
     );
 };
-export const useWebSocket=()=>useContext(WebSocketContext);
+
+export const useWebSocket = () => useContext(WebSocketContext);

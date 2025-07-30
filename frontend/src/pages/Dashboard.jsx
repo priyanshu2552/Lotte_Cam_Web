@@ -47,41 +47,39 @@ const Dashboard = () => {
         fetchUnits();
     }, []);
 
-    // In your Dashboard component
-useEffect(() => {
-    if (!selectedUnit) return;
+    useEffect(() => {
+        if (!selectedUnit || !socket) return;
 
-    const fetchData = async () => {
-        console.log("🔄 Fetching dashboard data...");
-        try {
-            const response = await axios.get('http://localhost:3000/api/users/dashboard-data', {
-                params: { unitName: selectedUnit },
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-            });
-            console.log("📊 Data received:", response.data);
-            setBelts(response.data.belts || []);
-        } catch (err) {
-            console.error('Error fetching dashboard data:', err);
-            setError('Failed to load belt data');
-        }
-    };
-
-    fetchData();
-
-    if (socket) {
-        console.log("👂 Setting up socket listener for dataChanged");
-        const handleDataChange = (data) => {
-            console.log("🔔 dataChanged event received:", data);
-            fetchData();
+        const fetchData = async () => {
+            console.log("🔄 Fetching dashboard data...");
+            try {
+                const response = await axios.get('http://localhost:3000/api/users/dashboard-data', {
+                    params: { unitName: selectedUnit },
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                });
+                console.log("📊 Data received:", response.data);
+                setBelts(response.data.belts || []);
+            } catch (err) {
+                console.error('Error fetching dashboard data:', err);
+                setError('Failed to load belt data');
+            }
         };
-        
-        socket.on('dataChanged', handleDataChange);
+
+        // Initial fetch
+        fetchData();
+
+        // Setup socket listener with debounce
+        const debounceTimer = setTimeout(fetchData, 500);
+        socket.on('dataChanged', () => {
+            clearTimeout(debounceTimer);
+            setTimeout(fetchData, 500);
+        });
+
         return () => {
-            console.log("🧹 Cleaning up socket listener");
-            socket.off('dataChanged', handleDataChange);
+            socket.off('dataChanged');
+            clearTimeout(debounceTimer);
         };
-    }
-}, [selectedUnit, socket]);
+    }, [selectedUnit, socket]);
     const indexOfLastBelt = currentPage * beltsPerPage;
     const indexOfFirstBelt = indexOfLastBelt - beltsPerPage;
     const currentBelts = belts.slice(indexOfFirstBelt, indexOfLastBelt);

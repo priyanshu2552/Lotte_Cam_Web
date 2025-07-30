@@ -4,11 +4,12 @@ import { DownloadOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
-import '../styles/Record.css'; 
+import '../styles/Record.css';
+import { useWebSocket } from '../context/WebSocketContext';
 const { Content } = Layout;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
-import { useWebSocket } from '../context/WebSocketContext';
+
 
 const ProductionRecords = () => {
     const [loading, setLoading] = useState(false);
@@ -20,12 +21,12 @@ const ProductionRecords = () => {
     const [total_p, setTotal_p] = useState(0);
 
     const [filters, setFilters] = useState({
-        unitName: null,  
+        unitName: null,
         beltId: null,
         productId: null,
         dateRange: [moment().subtract(10, 'days'), moment()]
     });
-    const socket=useWebSocket();
+    const socket = useWebSocket();
     const api = axios.create({
         baseURL: 'http://localhost:3000/api/users',
         timeout: 10000,
@@ -50,16 +51,25 @@ const ProductionRecords = () => {
         }
     }, [filters.unitName]);
 
-     useEffect(() => {
+    useEffect(() => {
         if (socket) {
             const handleDataChange = () => {
                 if (filters.unitName || filters.dateRange) {
-                    console.log('Refreshing production records...');
+                    console.log('Refreshing production records due to data change...');
                     fetchData();
                 }
             };
-            socket.on('dataChanged', handleDataChange);
-            return () => socket.off('dataChanged', handleDataChange);
+
+            const debounceTimer = setTimeout(handleDataChange, 500);
+            socket.on('dataChanged', () => {
+                clearTimeout(debounceTimer);
+                setTimeout(handleDataChange, 500);
+            });
+
+            return () => {
+                socket.off('dataChanged');
+                clearTimeout(debounceTimer);
+            };
         }
     }, [socket, filters]);
 
@@ -78,7 +88,7 @@ const ProductionRecords = () => {
     const fetchBeltsByUnit = async (unitName) => {
         try {
             const response = await api.get(`/getbeltsbyunit/${unitName}`);
-     
+
             const beltsData = Array.isArray(response.data) ? response.data : [];
             setBelts(beltsData);
             console.log('Fetched belts:', beltsData);
@@ -103,13 +113,13 @@ const ProductionRecords = () => {
         setLoading(true);
         try {
             const params = {
-                unitName: filters.unitName,  
+                unitName: filters.unitName,
                 beltId: filters.beltId,
                 productId: filters.productId,
                 startDate: filters.dateRange[0]?.add(1, 'day').format('YYYY-MM-DD'),
                 endDate: filters.dateRange[1]?.add(1, 'day').format('YYYY-MM-DD')
             };
-               
+
             const response = await api.get('/production/records', { params });
             setData(response.data);
         } catch (error) {
@@ -155,7 +165,7 @@ const ProductionRecords = () => {
     const handleFilterChange = (name, value) => {
         const newFilters = { ...filters, [name]: value };
 
-        if (name === 'unitName') { 
+        if (name === 'unitName') {
             newFilters.beltId = null;
             newFilters.productId = null;
         } else if (name === 'beltId') {

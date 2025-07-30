@@ -45,7 +45,23 @@ const Login = () => {
       toast.success('Login successful!');
       navigate('/dashboard');
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Login failed. Please try again.');
+      // Handle different types of errors with specific messages
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        if (error.response.status === 401) {
+          toast.error('Invalid email or password');
+        } else if (error.response.status === 500) {
+          toast.error('Server error. Please try again later.');
+        } else {
+          toast.error(error.response.data?.error || 'Login failed. Please try again.');
+        }
+      } else if (error.request) {
+        // The request was made but no response was received
+        toast.error('Network error. Please check your connection.');
+      } else {
+        // Something happened in setting up the request
+        toast.error('An unexpected error occurred.');
+      }
     } finally {
       setLoading(false);
     }

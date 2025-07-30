@@ -261,6 +261,78 @@ tr:hover {
 .save-btn:hover {
     background-color: #3a5e5f;
 }
+.video-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.video-wrapper video {
+    width: 100%;
+    background: #000;
+}
+
+.video-wrapper canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: auto;
+}
+
+.fullscreen-btn {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.fullscreen-btn:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.roi-modal .modal {
+    max-width: 800px;
+    width: 90%;
+}
+
+.roi-content {
+    padding: 20px;
+}
+
+.instructions {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f5f5f5;
+    border-radius: 4px;
+}
+
+.points-list {
+    margin-top: 10px;
+    font-family: monospace;
+}
+
+.clear-btn {
+    margin-top: 10px;
+    padding: 5px 10px;
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.clear-btn:hover {
+    background: #d32f2f;
+}
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
