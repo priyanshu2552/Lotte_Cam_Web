@@ -4,7 +4,7 @@ import axios from 'axios';
 import '../styles/Dashboard.css';
 import Sidebar from '../components/Sidebar';
 import { useWebSocket } from '../context/WebSocketContext';
-
+import CameraStream from '../components/CameraStream';
 const Dashboard = () => {
     const [units, setUnits] = useState([]);
     const [selectedUnit, setSelectedUnit] = useState(null);
@@ -154,17 +154,11 @@ const Dashboard = () => {
 
                                         <div className="belt-content">
                                             {/* Single Camera Feed */}
-                                            <div className="camera-feed">
-                                                <div className="video-container">
-                                                    <iframe
-                                                        src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1&loop=1"
-                                                        frameBorder="0"
-                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                        allowFullScreen
-                                                        title={`Camera Feed for ${belt.name}`}
-                                                    ></iframe>
-                                                </div>
-                                            </div>
+                                           // Replace the existing video iframe with:
+                                            <CameraStream
+                                                rtspUrl={belt.CameraCount}
+                                                showCanvas={false}
+                                            />
 
                                             <div className="production-data">
                                                 <h3>Today's Production</h3>

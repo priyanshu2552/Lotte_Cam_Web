@@ -11,8 +11,11 @@ import BeltEntries from './models/BeltEntries.js';
 import ProductionRecord from './models/ProductionRecord.js';
 import ProductionWebSocket from './Services/websocket.js';
 import bcrypt from 'bcryptjs';
-
+import { spawn } from 'child_process';
+import Stream from 'stream';
 dotenv.config();
+
+
 
 const app = express();
 app.use(cors());
@@ -27,7 +30,7 @@ async function createAdminUserIfNotExists() {
 
     if (users.length === 0) {
       const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
-      
+
       await pool.query(
         `INSERT INTO users 
         (name, email, password, contact, role, is_email_verified) 
@@ -64,7 +67,7 @@ async function initializeApplication() {
     // 3. Create admin user if not exists
     await createAdminUserIfNotExists();
 
-    
+
     const server = app.listen(process.env.PORT || 3000, () => {
       console.log(`🚀 Server running on port ${process.env.PORT || 3000}`);
     });
@@ -103,6 +106,75 @@ async function initializeAllSchemas() {
     throw err;
   }
 }
+const streamSessions = {};
+
+// MJPEG proxy endpoint
+app.get("/stream", (req, res) => {
+  const rtspUrl = req.query.url;
+
+  if (!rtspUrl) return res.status(400).send("RTSP URL required");
+
+  console.log(`📡 Requesting stream: ${rtspUrl}`);
+
+  res.writeHead(200, {
+    "Content-Type": "multipart/x-mixed-replace; boundary=frame",
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive",
+    Pragma: "no-cache",
+  });
+
+  const ffmpeg = spawn("ffmpeg", [
+    "-rtsp_transport",
+    "tcp",
+    "-i",
+    rtspUrl,
+    "-f",
+    "image2pipe",
+    "-q:v",
+    "5",
+    "-update",
+    "1",
+    "-r",
+    "5", // 5 FPS
+    "-"
+  ]);
+
+  let buffer = Buffer.alloc(0);
+
+  ffmpeg.stdout.on("data", (chunk) => {
+    buffer = Buffer.concat([buffer, chunk]);
+
+    // Look for JPEG end marker (FFD9)
+    let frameEnd = buffer.indexOf(Buffer.from([0xff, 0xd9]));
+    while (frameEnd !== -1) {
+      const frame = buffer.slice(0, frameEnd + 2);
+      buffer = buffer.slice(frameEnd + 2);
+
+      res.write(`--frame\r\n`);
+      res.write("Content-Type: image/jpeg\r\n\r\n");
+      res.write(frame);
+      res.write("\r\n");
+
+      frameEnd = buffer.indexOf(Buffer.from([0xff, 0xd9]));
+    }
+  });
+
+  ffmpeg.stderr.on("data", (data) => {
+    console.error(`FFmpeg STDERR: ${data}`);
+  });
+
+  ffmpeg.on("close", () => {
+    console.log("FFmpeg closed");
+    res.end();
+  });
+
+  req.on("close", () => {
+    console.log("Client disconnected, killing FFmpeg");
+    ffmpeg.kill("SIGKILL");
+  });
+});
+// Add after body parser middleware
+app.use('/mjpeg', express.static('mjpeg_cache'));
 
 // Start the application
 initializeApplication();

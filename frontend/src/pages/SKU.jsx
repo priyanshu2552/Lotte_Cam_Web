@@ -9,7 +9,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import '../styles/SKUManagement.css';
 import Sidebar from '../components/Sidebar';
-
+import CameraStream from '../components/CameraStream';
 const SKUManagement = () => {
     const [units, setUnits] = useState([]);
     const [belts, setBelts] = useState([]);
@@ -29,6 +29,8 @@ const SKUManagement = () => {
     const [currentCamera, setCurrentCamera] = useState(null); // 'count' or 'barcode'
     const [currentPoints, setCurrentPoints] = useState([]);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [roiPoints, setRoiPoints] = useState([]);
+    const [currentCameraType, setCurrentCameraType] = useState(null)
 
     // Form states
     const [unitForm, setUnitForm] = useState({ name: '' });
@@ -222,14 +224,9 @@ const SKUManagement = () => {
     };
 
     const handleOpenROIModal = (cameraType) => {
-        setCurrentCamera(cameraType);
-        setCurrentPoints([]);
+        setCurrentCameraType(cameraType);
+        setRoiPoints([]);
         setShowROIModal(true);
-
-        // Initialize player when modal opens
-        setTimeout(() => {
-            initPlayer(cameraType === 'count' ? beltForm.CameraCount : beltForm.CameraBarcode);
-        }, 100);
     };
 
     const initPlayer = (rtspUrl) => {
@@ -696,61 +693,44 @@ const SKUManagement = () => {
                     <div className="modal-overlay roi-modal">
                         <div className="modal">
                             <div className="modal-header">
-                                <h2>Set ROI for {currentCamera === 'count' ? 'Count Camera' : 'Barcode Camera'}</h2>
+                                <h2>Set ROI for {currentCameraType === 'count' ? 'Count Camera' : 'Barcode Camera'}</h2>
                                 <button onClick={handleCancelROI}>
                                     <FontAwesomeIcon icon={faTimes} />
                                 </button>
                             </div>
                             <div className="roi-content">
-                                <div className="video-wrapper">
-                                    <video
-                                        ref={videoRef}
-                                        controls
-                                        autoPlay
-                                        playsInline
-                                        style={{ width: '100%' }}
-                                    />
-                                    <canvas
-                                        ref={canvasRef}
-                                        width="640"
-                                        height="480"
-                                        onClick={handleCanvasClick}
-                                        style={{
-                                            position: 'absolute',
-                                            top: 0,
-                                            left: 0,
-                                            cursor: 'crosshair',
-                                            width: '100%',
-                                            height: '100%'
-                                        }}
-                                    />
+                                <CameraStream
+                                    rtspUrl={currentCameraType === 'count'
+                                        ? beltForm.CameraCount
+                                        : beltForm.CameraBarcode}
+                                    showCanvas={true}
+                                    onCanvasClick={(point) => {
+                                        if (roiPoints.length < 4) {
+                                            setRoiPoints([...roiPoints, point]);
+                                        }
+                                    }}
+                                />
+
+                                <div className="roi-controls">
+                                    <p>Click on the camera feed to mark ROI points (4 points needed)</p>
+                                    <p>Points selected: {roiPoints.length}/4</p>
+
+                                    <div className="points-display">
+                                        {roiPoints.map((point, index) => (
+                                            <div key={index}>
+                                                Point {index + 1}: ({Math.round(point.naturalX)}, {Math.round(point.naturalY)})
+                                            </div>
+                                        ))}
+                                    </div>
+
                                     <button
-                                        className="fullscreen-btn"
-                                        onClick={toggleFullscreen}
-                                        title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                                    >
-                                        <FontAwesomeIcon icon={isFullscreen ? faCompress : faExpand} />
-                                    </button>
-                                </div>
-                                <div className="instructions">
-                                    <p>Click on the video to mark the 4 corners of your ROI in clockwise order.</p>
-                                    <p>Points selected: {currentPoints.length}/4</p>
-                                    {currentPoints.length > 0 && (
-                                        <div className="points-list">
-                                            {currentPoints.map((point, index) => (
-                                                <div key={index}>Point {index + 1}: ({Math.round(point.x)}, {Math.round(point.y)})</div>
-                                            ))}
-                                        </div>
-                                    )}
-                                    <button
-                                        type="button"
                                         className="clear-btn"
                                         onClick={() => {
+                                            setRoiPoints([]);
                                             if (canvasRef.current) {
                                                 const ctx = canvasRef.current.getContext('2d');
                                                 ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
                                             }
-                                            setCurrentPoints([]);
                                         }}
                                     >
                                         Clear Points
@@ -764,8 +744,32 @@ const SKUManagement = () => {
                                 <button
                                     type="button"
                                     className="save-btn"
-                                    onClick={handleSaveROI}
-                                    disabled={currentPoints.length !== 4}
+                                    onClick={() => {
+                                        if (roiPoints.length !== 4) {
+                                            alert('Please select exactly 4 points');
+                                            return;
+                                        }
+
+                                        const naturalPoints = roiPoints.map(p => ({
+                                            x: p.naturalX,
+                                            y: p.naturalY
+                                        }));
+
+                                        if (currentCameraType === 'count') {
+                                            setBeltForm(prev => ({
+                                                ...prev,
+                                                ROI_Count: naturalPoints
+                                            }));
+                                        } else {
+                                            setBeltForm(prev => ({
+                                                ...prev,
+                                                ROI_Barcode: naturalPoints
+                                            }));
+                                        }
+
+                                        setShowROIModal(false);
+                                    }}
+                                    disabled={roiPoints.length !== 4}
                                 >
                                     <FontAwesomeIcon icon={faSave} /> Save ROI
                                 </button>

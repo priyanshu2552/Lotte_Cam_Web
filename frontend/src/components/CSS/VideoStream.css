@@ -1,0 +1,44 @@
+/* Add to your main CSS file */
+.video-stream-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+}
+
+.video-stream {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.video-stream.hidden {
+  visibility: hidden;
+}
+
+.fullscreen-toggle {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.stream-loading,
+.stream-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  z-index: 5;
+}
+
+.stream-error {
+  color: #ff6b6b;
+}
