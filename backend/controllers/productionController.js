@@ -18,7 +18,7 @@ class ProductionController {
           COUNT(be.id) AS entries_count
         FROM BeltEntries be
         JOIN Belt b ON be.belt_id = b.id
-        JOIN products p ON be.production_id = p.id
+        JOIN products p ON JSON_UNQUOTE(JSON_EXTRACT(be.Barcode_content, '$.data')) = p.code
         WHERE DATE(be.created_at) = ?
       `;
 
@@ -85,7 +85,7 @@ class ProductionController {
           COUNT(be.id) AS entries_count
         FROM BeltEntries be
         JOIN Belt b ON be.belt_id = b.id
-        JOIN products p ON be.production_id = p.id
+        JOIN products p ON JSON_UNQUOTE(JSON_EXTRACT(be.Barcode_content, '$.data')) = p.code
         WHERE DATE(be.created_at) BETWEEN ? AND ?
       `;
       const params = [queryStartDate, queryEndDate];
@@ -106,10 +106,7 @@ class ProductionController {
         GROUP BY b.id, p.id, DATE(be.created_at)
         ORDER BY production_date DESC, b.name, p.name
       `;
-      if (beltId && unitId) {
-        res.status(500).json({ error: 'Belt ID and Unit ID is not filled.' });
-        return;
-      }
+
       const [results] = await pool.query(query, params);
 
       // Compose data: date > belts > products
@@ -266,7 +263,7 @@ class ProductionController {
           SUM(be.BoxCount * p.pieces) AS total_pieces
         FROM BeltEntries be
         JOIN Belt b ON be.belt_id = b.id
-        JOIN products p ON be.production_id = p.id
+        JOIN products p ON JSON_UNQUOTE(JSON_EXTRACT(be.Barcode_content, '$.data')) = p.code
         WHERE b.Unit = ? AND DATE(be.created_at) = ?
         GROUP BY b.id, p.id
         ORDER BY b.id, p.name

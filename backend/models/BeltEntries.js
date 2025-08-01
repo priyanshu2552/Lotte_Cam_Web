@@ -11,13 +11,11 @@ class BeltEntries {
                     `CREATE TABLE BeltEntries(
                         id INT PRIMARY KEY AUTO_INCREMENT,
                         BoxCount int unsigned default NULL,
-                        Barcode_content json,
+                        Barcode_content json NOT NULL,  
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         Updated datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                         belt_id INT,
-                        production_id INT,
-                        FOREIGN KEY (belt_id) REFERENCES Belt(id),
-                        FOREIGN KEY (production_id) REFERENCES products(id)
+                        FOREIGN KEY (belt_id) REFERENCES Belt(id)
                     )`
                 );
                 console.log("✅ BeltEntries table created");
